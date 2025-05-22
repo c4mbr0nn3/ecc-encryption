@@ -14,12 +14,14 @@ pair:
 
 ### User's secret role
 
-The user secret, which the user inputs, will be used to protect their private key. This is typically done by:
+The user's secret, which the user inputs, will be used to protect their private key. This is typically done by:
 
-- Generate EC key pair
+- Generating EC key pair
 - Encrypting the private key with a symmetric key derived from the user's secret (using PBKDF2 and a salt).
 - Storing this encrypted private key with salt (ideally on hardware like yubikey). The system stores the public key,
   accessible for encryption operations.
+
+The user's secret is not stored in the system and is not equal to the password used to login in the system.
 
 ### Data Encryption Key (DEK) encryption (wrapping)
 
@@ -53,14 +55,13 @@ When a user needs to decrypt the data, they will:
 
 ### `user_key_credentials` table
 
-| Column Name   | Type  | Constraint | Description                       |
-|---------------|-------|------------|-----------------------------------|
-| id            | int   | PK         | Unique identifier for the record  |
-| user_id       | int   | FK         | Foreign key to the users table    |
-| public_key    | bytea |            | User's public key                 |
-| private_key   | bytea |            | Encrypted user's private key      |
-| salt          | bytea |            | Salt used for key derivation      |
-| key_algorithm | text  |            | Algorithm used for key generation |
+| Column Name           | Type  | Constraint | Description                      |
+|-----------------------|-------|------------|----------------------------------|
+| id                    | int   | PK         | Unique identifier for the record |
+| user_id               | int   | FK         | Foreign key to the users table   |
+| public_key            | bytea |            | User's public key                |
+| encrypted_private_key | bytea |            | Encrypted user's private key     |
+| salt                  | bytea |            | Salt used for key derivation     |
 
 ### `encypted_data` table
 
@@ -78,8 +79,17 @@ When a user needs to decrypt the data, they will:
 | encrypted_data_id | int   | FK         | Foreign key to the encrypted data table                                                                                                                        |
 | encrypted_dek     | bytea |            | The DEK encrypted with the users's public key. <br/>This is the output of a scheme like ECIES, containing ephemeral public key, ciphertext of DEK, and MAC tag |
 
+## Workflows
 
+### User missing EC key pair
 
+We assume user is already registered in the system but it is missing the EC key pair.
+
+The user will be prompted by the system to insert a new secret, once the secret is inserted the system will:
+
+1. Generate a new EC key pair
+2. Encrypt the private key with a symmetric key derived from the user's secret (using PBKDF2 and a salt).
+3. Store the encrypted private key, salt, and public key in the `user_key_credentials` table.
 
 
 
