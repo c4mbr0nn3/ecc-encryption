@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ecc-encryption", "ecc-encryption.csproj", "{0E8A1C6F-FDE8-425F-B849-961E0366DADD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0E8A1C6F-FDE8-425F-B849-961E0366DADD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E8A1C6F-FDE8-425F-B849-961E0366DADD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E8A1C6F-FDE8-425F-B849-961E0366DADD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E8A1C6F-FDE8-425F-B849-961E0366DADD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
