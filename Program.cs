@@ -6,7 +6,9 @@ class Program
 {
     public static void Main()
     {
-        var credentialStore = new Dictionary<int, UserKeyCredential>();
+        var credentialStore = new Dictionary<int, UserKeyCredential>(); // key = user id
+        var encryptedDataStore = new Dictionary<Guid, EncryptedData>(); // key = data id
+        var accessControlStore = new Dictionary<int, EncryptedDataAccessGrant>(); // key = user id
 
         // Example usage
         Console.WriteLine("Enter your id:");
@@ -44,8 +46,35 @@ class Program
         Console.WriteLine($"Salt (Base64): {Convert.ToBase64String(value.Salt)}");
 
 
-        /*Console.WriteLine("\nEnter sensitive data to encrypt:");
-        var sensitiveData = Console.ReadLine();*/
+        Console.WriteLine("\nEnter sensitive data to encrypt:");
+        var sensitiveData = Console.ReadLine();
+        if (string.IsNullOrEmpty(sensitiveData))
+        {
+            Console.WriteLine("Sensitive data cannot be empty.");
+            return;
+        }
+
+        // Encrypt the sensitive data using the public key
+        // TODO: missing dek
+        var encryptionResult = AsymmetricCipher.EncryptDataWithPublicKey(value.UserId, value.PublicKey, sensitiveData);
+        var encryptedData = new EncryptedData
+        {
+            Data = encryptionResult
+        };
+
+        // Store the encrypted data
+        encryptedDataStore[encryptedData.Id] = encryptedData;
+
+        // grant access to the user
+        var accessGrant = new EncryptedDataAccessGrant
+        {
+            UserId = userId,
+            DataId = encryptedData.Id
+        };
+
+        accessControlStore[userId] = accessGrant;
+
+        Console.WriteLine($"Encrypted Data (Base64): {Convert.ToBase64String(encryptedData.Data)}");
 
         // // In a real application, the salt would be stored in the database
         // // It should be generated once per user and saved

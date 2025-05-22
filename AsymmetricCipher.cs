@@ -35,6 +35,11 @@ public class AsymmetricCipher
         return result;
     }
 
+    public static byte[] EncryptDataWithPublicKey(int userId, byte[] publicKey, string sensitiveData)
+    {
+        throw new NotImplementedException();
+    }
+
 
     private static byte[] GenerateRandomSalt()
     {
@@ -80,6 +85,29 @@ public class AsymmetricCipher
             Dek = key,
             DekIv = iv
         };
+    }
+
+    private static byte[] DecryptWithAes(byte[] data, byte[] key)
+    {
+        using var aesAlg = Aes.Create();
+        aesAlg.Key = key;
+        aesAlg.Mode = CipherMode.CBC;
+
+        if (data == null || data.Length < aesAlg.BlockSize / 8)
+            throw new ArgumentException("Encrypted data is too short to contain an IV.", nameof(data));
+
+        byte[] iv = new byte[aesAlg.BlockSize / 8];
+        Buffer.BlockCopy(data, 0, iv, 0, iv.Length);
+        aesAlg.IV = iv;
+
+        using var decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+        using var msDecrypt = new MemoryStream(data, iv.Length, data.Length - iv.Length);
+        using var msPlainText = new MemoryStream();
+        using (var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+        {
+            csDecrypt.CopyTo(msPlainText);
+        }
+        return msPlainText.ToArray();
     }
 
     /*
