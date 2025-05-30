@@ -41,7 +41,7 @@ ephemeral public key used in the encryption process.
 When a user needs to decrypt the data, they will:
 
 1. Provide their secret to the system
-2. The application uses the secret (and the stored salt) to derive a kay that decrypts the private key.
+2. The application uses the secret (and the stored salt) to derive a key that decrypts the private key.
 3. The application uses the decrypted private key to decrypt the DEK using ECIES.
 4. The DEK is then used to decrypt the data payload using symmetric encryption (AES or similar).
 
