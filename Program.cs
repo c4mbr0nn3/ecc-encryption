@@ -1,4 +1,5 @@
-﻿using ecc_encryption.Models;
+﻿using System.Text;
+using ecc_encryption.Models;
 
 namespace ecc_encryption;
 
@@ -45,7 +46,6 @@ class Program
         Console.WriteLine($"Encrypted Private Key (Base64): {Convert.ToBase64String(value.EncryptedPrivateKey)}");
         Console.WriteLine($"Salt (Base64): {Convert.ToBase64String(value.Salt)}");
 
-
         Console.WriteLine("\nEnter sensitive data to encrypt:");
         var sensitiveData = Console.ReadLine();
         if (string.IsNullOrEmpty(sensitiveData))
@@ -55,51 +55,55 @@ class Program
         }
 
         // Encrypt the sensitive data using the public key
-        // TODO: missing dek
-        var encryptionResult = AsymmetricCipher.EncryptDataWithPublicKey(value.UserId, value.PublicKey, sensitiveData);
-        var encryptedData = new EncryptedData
-        {
-            Data = encryptionResult
-        };
+        var encryptionResult = AsymmetricCipher.EncryptDataWithPublicKey(sensitiveData, value.PublicKey);
 
         // Store the encrypted data
-        encryptedDataStore[encryptedData.Id] = encryptedData;
+        encryptedDataStore[encryptionResult.Id] = encryptionResult;
 
-        // grant access to the user
+        // Grant access to the user
         var accessGrant = new EncryptedDataAccessGrant
         {
             UserId = userId,
-            DataId = encryptedData.Id
+            DataId = encryptionResult.Id
         };
 
         accessControlStore[userId] = accessGrant;
 
-        Console.WriteLine($"Encrypted Data (Base64): {Convert.ToBase64String(encryptedData.Data)}");
+        Console.WriteLine($"Encrypted Data (Base64): {Convert.ToBase64String(encryptionResult.Data)}");
+        Console.WriteLine($"Encrypted DEK (Base64): {Convert.ToBase64String(encryptionResult.EncryptedDek)}");
+        Console.WriteLine($"DEK IV (Base64): {Convert.ToBase64String(encryptionResult.DekIv)}");
+        Console.WriteLine($"KEK Salt (Base64): {Convert.ToBase64String(encryptionResult.KekSalt)}");
 
-        // // In a real application, the salt would be stored in the database
-        // // It should be generated once per user and saved
-        // var salt = Cipher.GenerateRandomSalt();
-        // Console.WriteLine($"Generated salt (Base64): {Convert.ToBase64String(salt)}");
-        //
-        // // Encrypt the sensitive data using a public key derived from the password
-        // var encryptedData = Cipher.EncryptWithPassword(sensitiveData, password, salt);
-        // Console.WriteLine($"\nEncrypted data (Base64): {Convert.ToBase64String(encryptedData)}");
-        //
-        // // Later, decrypt the data using the same password
-        // Console.WriteLine("\nDecrypting with the same password...");
-        // var decryptedData = Cipher.DecryptWithPassword(encryptedData, password, salt);
-        // Console.WriteLine($"Decrypted: {decryptedData}");
-        //
-        // // What happens with a wrong password?
-        // Console.WriteLine("\nTrying with incorrect password:");
-        // try
-        // {
-        //     var wrongDecryption = Cipher.DecryptWithPassword(encryptedData, password + "wrong", salt);
-        //     Console.WriteLine($"Decrypted (should not see this): {wrongDecryption}");
-        // }
-        // catch (Exception ex)
-        // {
-        //     Console.WriteLine($"Decryption failed as expected: {ex.Message}");
-        // }
+        Console.WriteLine("\nTo decrypt the data, enter your secret again:");
+        var decryptionSecret = Console.ReadLine();
+        if (string.IsNullOrEmpty(decryptionSecret))
+        {
+            Console.WriteLine("Secret cannot be empty.");
+            return;
+        }
+
+        if (!credentialStore.TryGetValue(userId, out var userKeyCredential))
+        {
+            Console.WriteLine("User key credential not found. Please generate a key pair first.");
+            return;
+        }
+
+        if (!encryptedDataStore.TryGetValue(encryptionResult.Id, out var encryptedData))
+        {
+            Console.WriteLine("Encrypted data not found.");
+            return;
+        }
+
+        try
+        {
+            var decryptedData =
+                AsymmetricCipher.DecryptDataWithPrivateKey(encryptedData, decryptionSecret, userKeyCredential);
+            Console.WriteLine($"Decrypted Data: {Encoding.UTF8.GetString(decryptedData)}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Decryption failed: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
+        }
     }
 }
